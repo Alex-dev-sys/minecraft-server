@@ -14,58 +14,6 @@ function validateUsername(nick: string): string | null {
   return null
 }
 
-// ─── recent purchases ticker ──────────────────────────────────────────────────
-
-const RECENT: { nick: string; rank: string; duration: string }[] = [
-  { nick: 'DarkSword228', rank: 'Elite', duration: 'навсегда' },
-  { nick: 'xX_Notch_Xx', rank: 'Hero', duration: '30 дней' },
-  { nick: 'PvPmaster99', rank: 'Squid', duration: '90 дней' },
-  { nick: 'IronForge', rank: 'Head', duration: 'навсегда' },
-  { nick: 'StarlightGG', rank: 'Aspid', duration: '30 дней' },
-  { nick: 'ZombieSlayer', rank: 'Guard', duration: 'навсегда' },
-  { nick: 'NightRaider', rank: 'Elite', duration: '90 дней' },
-  { nick: 'CreeperKing', rank: 'Hero', duration: 'навсегда' },
-  { nick: 'DiamondBlade', rank: 'Squid', duration: '30 дней' },
-  { nick: 'VoidWalker', rank: 'Aspid', duration: 'навсегда' },
-]
-
-function RecentPurchasesTicker() {
-  const [idx, setIdx] = useState(0)
-  const [visible, setVisible] = useState(true)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVisible(false)
-      setTimeout(() => {
-        setIdx(i => (i + 1) % RECENT.length)
-        setVisible(true)
-      }, 400)
-    }, 4000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const item = RECENT[idx]
-  const ago = Math.floor(Math.random() * 12) + 1
-
-  return (
-    <div className="flex items-center gap-2 text-xs text-site-muted overflow-hidden">
-      <span className="w-1.5 h-1.5 rounded-full bg-site-success flex-shrink-0 animate-pulse" />
-      <span
-        className="transition-opacity duration-300 whitespace-nowrap"
-        style={{ opacity: visible ? 1 : 0 }}
-      >
-        <span className="text-site-text font-mono">{item.nick}</span>
-        {' купил '}
-        <span className="text-site-accent font-semibold">{item.rank}</span>
-        {' '}
-        <span>{item.duration}</span>
-        {' — '}
-        <span>{ago} мин. назад</span>
-      </span>
-    </div>
-  )
-}
-
 // ─── rank carousel ────────────────────────────────────────────────────────────
 
 function RankCarousel({ products, selectedId, onSelect }: {
@@ -86,7 +34,7 @@ function RankCarousel({ products, selectedId, onSelect }: {
   }, [selectedId])
 
   return (
-    <div style={{ backgroundColor: '#0e0e0e', borderRadius: '0 0 12px 12px' }}>
+    <div style={{ backgroundColor: '#0e0e0e' }}>
       <style>{`
         @keyframes orb-pulse {
           0%, 100% { box-shadow: 0 0 10px var(--c), 0 0 20px var(--c-50); transform: scale(1); }
@@ -124,7 +72,8 @@ function RankCarousel({ products, selectedId, onSelect }: {
           style={{
             flexShrink: 0, width: 36, height: 56,
             background: 'linear-gradient(135deg, #1a0b0b, #120808)',
-            border: '1px solid #3A1017', borderRadius: 10,
+            border: '1px solid #3A1017',
+            clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
             color: '#666', fontSize: 20, cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}
@@ -159,7 +108,8 @@ function RankCarousel({ products, selectedId, onSelect }: {
                       position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)',
                       zIndex: 10, backgroundColor: p.color, color: '#000',
                       fontSize: 8, fontWeight: 800, padding: '2px 7px',
-                      borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.05em',
+                      clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
+                      whiteSpace: 'nowrap', letterSpacing: '0.05em',
                       boxShadow: `0 2px 8px ${p.color}80`,
                     }}
                   >
@@ -170,7 +120,7 @@ function RankCarousel({ products, selectedId, onSelect }: {
                 {/* spinning ring behind active card */}
                 {active && (
                   <div style={{
-                    position: 'absolute', inset: -3, borderRadius: 16, zIndex: 0,
+                    position: 'absolute', inset: -3, clipPath: 'polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px))', zIndex: 0,
                     background: `conic-gradient(${p.color}60 0deg, transparent 120deg, ${p.color}30 240deg, transparent 360deg)`,
                     animation: 'ring-spin 4s linear infinite',
                   }} />
@@ -188,7 +138,7 @@ function RankCarousel({ products, selectedId, onSelect }: {
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center',
                     gap: 10, padding: '14px 8px 10px',
-                    borderRadius: 14,
+                    clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
                     border: active
                       ? `1.5px solid ${p.color}`
                       : isHov ? `1px solid ${p.color}60` : '1px solid #2a1010',
@@ -275,7 +225,8 @@ function RankCarousel({ products, selectedId, onSelect }: {
           style={{
             flexShrink: 0, width: 36, height: 56,
             background: 'linear-gradient(135deg, #1a0b0b, #120808)',
-            border: '1px solid #3A1017', borderRadius: 10,
+            border: '1px solid #3A1017',
+            clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
             color: '#666', fontSize: 20, cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}
@@ -329,7 +280,7 @@ function DurationButton({ variant, active, saving, onClick }: {
           fontSize: 9,
           fontWeight: 700,
           padding: '1px 5px',
-          borderRadius: 20,
+          clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
           letterSpacing: 0.3,
           boxShadow: '0 2px 6px rgba(53,199,89,0.35)',
         }}>
@@ -521,16 +472,15 @@ export default function ShopClient({ products }: { products: Product[] }) {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
 
-      {/* Header + ticker */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h1 className="font-pixel text-xs md:text-sm text-site-accent">МАГАЗИН ПРИВИЛЕГИЙ</h1>
-        <RecentPurchasesTicker />
       </div>
 
       {/* ── Rank carousel ── */}
-      <div className="border border-site-border rounded-xl mb-6 overflow-hidden" style={{ backgroundColor: '#0e0e0e' }}>
+      <div className="border border-site-border mb-6 overflow-hidden" style={{ backgroundColor: '#0e0e0e', clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))' }}>
         <div className="flex items-center gap-3 px-6 pt-4 pb-0">
-          <div style={{ width: 3, height: 14, backgroundColor: '#FF2B4F', borderRadius: 2, flexShrink: 0 }} />
+          <div style={{ width: 3, height: 14, backgroundColor: '#FF2B4F', flexShrink: 0 }} />
           <p
             className="text-[10px] uppercase tracking-[0.4em]"
             style={{ color: '#666', fontFamily: '"JetBrains Mono", monospace' }}

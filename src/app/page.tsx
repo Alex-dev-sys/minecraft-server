@@ -124,7 +124,7 @@ function GalleryCard({ title, coord, bg }: { title: string; coord: string; bg: s
   return (
     <div
       style={{
-        position: 'relative', aspectRatio: '4/3', borderRadius: 10, overflow: 'hidden',
+        position: 'relative', aspectRatio: '4/3', clipPath: 'polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px))', overflow: 'hidden',
         border: '1px solid #3A1017', cursor: 'pointer',
         background: bg,
         transition: 'border-color 0.2s, transform 0.2s',
@@ -228,7 +228,7 @@ function FAQSection() {
             style={{
               backgroundColor: '#0e0e0e',
               border: `1px solid ${open === i ? '#FF2B4F40' : '#3A1017'}`,
-              borderRadius: 10, overflow: 'hidden',
+              clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))', overflow: 'hidden',
               transition: 'border-color 0.2s',
             }}
           >
@@ -473,7 +473,7 @@ export default function HomePage() {
                 className="text-[9px] text-[#3A1017] group-hover:text-site-accent/50 tracking-[0.4em] mb-4 transition-colors"
                 style={{ fontFamily: '"JetBrains Mono", monospace' }}
               >
-                {f.code} // {f.tag}
+                {f.code} {'//'} {f.tag}
               </div>
               <h3
                 className="font-display text-2xl text-white mb-3 group-hover:text-site-accent transition-colors"

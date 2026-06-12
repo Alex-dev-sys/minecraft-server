@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -6,7 +6,12 @@ import SaleBanner from '@/components/SaleBanner'
 import PageTransition from '@/components/PageTransition'
 import { ToastProvider } from '@/components/Toast'
 
+export const viewport: Viewport = {
+  themeColor: '#070707',
+}
+
 export const metadata: Metadata = {
+  metadataBase: new URL(`https://${process.env.NEXT_PUBLIC_SITE_DOMAIN ?? 'vibestudy.ru'}`),
   title: {
     default: 'NATUX WORLD — Minecraft Server',
     template: '%s — NATUX WORLD',

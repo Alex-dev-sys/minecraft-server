@@ -120,7 +120,7 @@ export default function Header() {
               style={{ fontFamily: '"JetBrains Mono", monospace' }}
               onClick={() => setOpen(false)}
             >
-              <span className="text-site-accent/40">//</span>
+              <span className="text-site-accent/40">{'//'}</span>
               {label}
             </Link>
           ))}
