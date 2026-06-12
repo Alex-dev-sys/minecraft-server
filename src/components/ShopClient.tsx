@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import RankEmblem from './RankEmblem'
 import RankAura from './RankAura'
+import RankFrame from './RankFrame'
 import { useRouter } from 'next/navigation'
 import type { Product, Duration, ProductVariant, Coupon } from '@/lib/types'
 
@@ -45,10 +46,6 @@ function RankCarousel({ products, selectedId, onSelect }: {
         @keyframes card-float {
           0%, 100% { transform: translateY(0px); }
           50%       { transform: translateY(-4px); }
-        }
-        @keyframes ring-spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
         }
         @keyframes badge-pulse {
           0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
@@ -119,14 +116,8 @@ function RankCarousel({ products, selectedId, onSelect }: {
                   </span>
                 )}
 
-                {/* spinning ring behind active card */}
-                {active && (
-                  <div style={{
-                    position: 'absolute', inset: -3, clipPath: 'polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px))', zIndex: 0,
-                    background: `conic-gradient(${p.color}60 0deg, transparent 120deg, ${p.color}30 240deg, transparent 360deg)`,
-                    animation: 'ring-spin 4s linear infinite',
-                  }} />
-                )}
+                {/* премиальное обрамление активной карточки */}
+                {active && <RankFrame rank={p.id} color={p.color} />}
 
                 <button
                   data-active={active}

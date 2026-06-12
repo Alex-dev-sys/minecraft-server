@@ -525,10 +525,159 @@
 .aura-orbit-arm { animation: aura-orbit-spin linear infinite; }
 .aura-rays      { animation: aura-rays-spin linear infinite; transform-origin: 50% 50%; }
 
+
+/* =====================
+   RANK FRAME (премиальное обрамление активной карточки ранга)
+   ===================== */
+
+/* Регистрируем угол как анимируемое свойство, чтобы искра шла плавно. */
+@property --rf-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rank-beam-run {
+  to { --rf-angle: 360deg; }
+}
+
+@keyframes rank-frame-breathe {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.9; }
+}
+
+@keyframes rank-corner-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+/* Внешняя угловатая рамка-носитель — общая геометрия для слоёв. */
+.rank-frame {
+  position: absolute;
+  inset: -4px;
+  z-index: 0;
+  pointer-events: none;
+  --rf-clip: 12px;
+}
+
+/* Мягкое дышащее свечение в цвет ранга. */
+.rank-frame__glow {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, calc(100% - var(--rf-clip)) 0, 100% var(--rf-clip), 100% 100%, var(--rf-clip) 100%, 0 calc(100% - var(--rf-clip)));
+  box-shadow: 0 0 14px 1px var(--rf-c), inset 0 0 10px -2px var(--rf-c);
+  animation: rank-frame-breathe var(--rf-breathe, 3.4s) ease-in-out infinite;
+}
+
+/* Тонкий статичный контур. */
+.rank-frame__edge {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, calc(100% - var(--rf-clip)) 0, 100% var(--rf-clip), 100% 100%, var(--rf-clip) 100%, 0 calc(100% - var(--rf-clip)));
+  padding: 1px;
+  background: var(--rf-c);
+  opacity: 0.4;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+}
+
+/* Внешняя пунктирная рамка (для рангов высокого класса). */
+.rank-frame__outer {
+  position: absolute;
+  inset: -4px;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  padding: 1px;
+  background:
+    repeating-linear-gradient(90deg, var(--rf-c) 0 4px, transparent 4px 9px);
+  opacity: 0.3;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+}
+
+/* Бегущая по периметру искра (border-beam). Узкий яркий сегмент с белым
+   ядром «течёт» по рамке за счёт вращения conic-gradient под маской. */
+.rank-frame__beam {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, calc(100% - var(--rf-clip)) 0, 100% var(--rf-clip), 100% 100%, var(--rf-clip) 100%, 0 calc(100% - var(--rf-clip)));
+  padding: var(--rf-ring, 2px);
+  background: conic-gradient(
+    from var(--rf-angle),
+    transparent 0 70%,
+    var(--rf-c) 79%,
+    #ffffff 84%,
+    var(--rf-c) 89%,
+    transparent 96% 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: rank-beam-run var(--rf-speed, 4.5s) linear infinite;
+}
+
+/* Двойная искра — для топовых рангов (две противоположные вспышки). */
+.rank-frame__beam--two {
+  background: conic-gradient(
+    from var(--rf-angle),
+    transparent 0 33%,
+    var(--rf-c) 40%,
+    #ffffff 45%,
+    var(--rf-c) 50%,
+    transparent 57% 83%,
+    var(--rf-c) 88%,
+    #ffffff 92%,
+    var(--rf-c) 96%,
+    transparent 100%
+  );
+}
+
+/* Угловые маркеры. */
+.rank-frame__corner {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border: 0 solid var(--rf-c);
+  animation: rank-corner-blink 2s ease-in-out infinite;
+}
+.rank-frame__corner--tl { top: -1px; left: -1px;  border-width: 1.5px 0 0 1.5px; }
+.rank-frame__corner--tr { top: -1px; right: -1px; border-width: 1.5px 1.5px 0 0; }
+.rank-frame__corner--bl { bottom: -1px; left: -1px;  border-width: 0 0 1.5px 1.5px; }
+.rank-frame__corner--br { bottom: -1px; right: -1px; border-width: 0 1.5px 1.5px 0; }
+
+/* Самоцвет в углах (King). */
+.rank-frame__gem {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: var(--rf-c);
+  transform: rotate(45deg);
+  box-shadow: 0 0 5px var(--rf-c);
+  animation: rank-corner-blink 1.8s ease-in-out infinite;
+}
+.rank-frame__gem--tl { top: -2px; left: -2px; }
+.rank-frame__gem--tr { top: -2px; right: -2px; }
+.rank-frame__gem--bl { bottom: -2px; left: -2px; }
+.rank-frame__gem--br { bottom: -2px; right: -2px; }
+
 @media (prefers-reduced-motion: reduce) {
   .rank-aura {
     display: none;
   }
+
+  /* Рамку оставляем, но замораживаем искру и пульсацию (статичный люкс-контур). */
+  .rank-frame__beam,
+  .rank-frame__glow,
+  .rank-frame__corner,
+  .rank-frame__gem {
+    animation: none !important;
+  }
+  .rank-frame__beam { background: var(--rf-c); opacity: 0.5; }
+  .rank-frame__glow { opacity: 0.5; }
 
   /* Catch-all: инлайновые keyframes (карусель магазина) и tailwind animate-* */
   *,
