@@ -17,6 +17,25 @@ function validateUsername(nick: string): string | null {
   return null
 }
 
+// Тёмный/светлый текст в зависимости от яркости фона (контраст на кнопке).
+function readableText(hex: string): string {
+  const n = parseInt(hex.slice(1), 16)
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return lum > 0.6 ? '#0A0608' : '#ffffff'
+}
+
+// Осветлить/затемнить hex-цвет (f<0 темнее, f>0 светлее).
+function shade(hex: string, f: number): string {
+  const n = parseInt(hex.slice(1), 16)
+  const ch = (v: number) => {
+    const m = f < 0 ? v * (1 + f) : v + (255 - v) * f
+    return Math.round(Math.min(255, Math.max(0, m)))
+  }
+  const r = ch((n >> 16) & 255), g = ch((n >> 8) & 255), b = ch(n & 255)
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`
+}
+
 // ─── rank carousel ────────────────────────────────────────────────────────────
 
 function RankCarousel({ products, selectedId, onSelect }: {
@@ -244,20 +263,25 @@ function RankCarousel({ products, selectedId, onSelect }: {
 
 // ─── duration button ──────────────────────────────────────────────────────────
 
-function DurationButton({ variant, active, saving, onClick }: {
+function DurationButton({ variant, active, saving, color, onClick }: {
   variant: ProductVariant
   active: boolean
   saving?: number
+  color: string
   onClick: () => void
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex-1 py-2.5 px-2 rounded border text-sm transition-all relative ${
-        active
-          ? 'border-site-accent bg-site-secondary text-site-accent'
-          : 'border-site-border bg-site-block text-site-muted hover:border-site-accent/40 hover:text-site-text'
-      }`}
+      className="flex-1 py-2.5 px-2 text-sm transition-all relative"
+      style={{
+        clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
+        border: `1px solid ${active ? color : '#2a1010'}`,
+        background: active ? `linear-gradient(160deg, ${color}22 0%, #0d0d0d 100%)` : '#111',
+        boxShadow: active ? `0 0 14px ${color}33, inset 0 0 12px ${color}10` : 'none',
+      }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = `${color}66` }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.borderColor = '#2a1010' }}
     >
       {saving && saving > 0 ? (
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap" style={{
@@ -274,8 +298,8 @@ function DurationButton({ variant, active, saving, onClick }: {
         </div>
       ) : null}
       <div className="text-center leading-snug">
-        <div className="font-medium">{variant.durationLabel}</div>
-        <div className={`text-xs mt-0.5 font-bold ${active ? 'text-site-accent' : 'text-site-muted'}`}>
+        <div className="font-medium" style={{ color: active ? '#fff' : '#aaa' }}>{variant.durationLabel}</div>
+        <div className="text-xs mt-0.5 font-bold" style={{ color: active ? color : '#888' }}>
           {variant.price} ₽
         </div>
       </div>
@@ -482,189 +506,237 @@ export default function ShopClient({ products }: { products: Product[] }) {
         />
       </div>
 
-      {/* ── Rank details ── */}
-      <div className="bg-site-block border border-site-border rounded-lg p-4 sm:p-6 relative overflow-hidden">
+      {/* ── Rank details (досье ранга) ── */}
+      <div
+        className="relative overflow-hidden p-5 sm:p-7"
+        style={{
+          ['--rank' as string]: product.color,
+          background: `linear-gradient(165deg, ${product.color}12 0%, #0b0b0b 42%)`,
+          border: `1px solid ${product.color}33`,
+          clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))',
+          boxShadow: `0 0 50px -14px ${product.color}66, inset 0 1px 0 ${product.color}22`,
+        }}
+      >
+        {/* верхняя акцентная кромка */}
+        <div
+          className="absolute top-0 left-0 right-0"
+          style={{ height: 2, background: `linear-gradient(90deg, transparent, ${product.color}, transparent)` }}
+        />
+        {/* угловые скобки */}
+        <div className="absolute top-2.5 left-2.5 w-4 h-4 pointer-events-none" style={{ borderLeft: `2px solid ${product.color}66`, borderTop: `2px solid ${product.color}66` }} />
+        <div className="absolute bottom-2.5 right-2.5 w-4 h-4 pointer-events-none" style={{ borderRight: `2px solid ${product.color}66`, borderBottom: `2px solid ${product.color}66` }} />
+        {/* код допуска */}
+        <div
+          className="absolute top-3 right-5 text-[9px] tracking-[0.3em] hidden sm:block"
+          style={{ fontFamily: '"JetBrains Mono", monospace', color: `${product.color}aa` }}
+        >
+          ДОПУСК {String(product.order).padStart(2, '0')} / 15
+        </div>
 
-            {/* Popular glow strip */}
-            {product.popular && (
-              <div
-                className="absolute top-0 left-0 right-0 h-0.5"
-                style={{ background: `linear-gradient(90deg, transparent, ${product.color}, transparent)` }}
-              />
-            )}
-
-            {/* Rank name */}
-            <div className="flex items-center gap-3 mb-1">
-              <div style={{ filter: `drop-shadow(0 0 10px ${product.color}80)`, flexShrink: 0, position: 'relative' }}>
-                <RankAura rank={product.id} size={40} />
-                <RankEmblem rank={product.id} color={product.color} size={40} />
-              </div>
-              <h2
-                className="font-pixel text-sm md:text-base"
-                style={{ color: product.color }}
+        {/* Шапка ранга */}
+        <div className="flex items-center gap-3 mb-2 relative">
+          <div style={{ filter: `drop-shadow(0 0 12px ${product.color}99)`, flexShrink: 0, position: 'relative' }}>
+            <RankAura rank={product.id} size={44} />
+            <RankEmblem rank={product.id} color={product.color} size={44} />
+          </div>
+          <div className="flex flex-col">
+            <h2
+              className="font-display text-3xl md:text-4xl leading-none"
+              style={{ fontFamily: '"Bebas Neue", sans-serif', color: product.color, letterSpacing: '0.06em', textShadow: `0 0 24px ${product.color}55` }}
+            >
+              {product.name}
+            </h2>
+            {product.badge && (
+              <span
+                className="mt-1.5 self-start text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider"
+                style={{
+                  backgroundColor: product.color,
+                  color: readableText(product.color),
+                  clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
+                }}
               >
-                {product.name}
-              </h2>
-              {product.badge && (
+                {product.badge}
+              </span>
+            )}
+          </div>
+        </div>
+        <p className="text-site-muted text-sm mb-6 leading-relaxed">{product.description}</p>
+
+        {/* Срок допуска */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div style={{ width: 3, height: 12, background: product.color }} />
+            <p className="text-[10px] uppercase tracking-[0.35em]" style={{ fontFamily: '"JetBrains Mono", monospace', color: `${product.color}cc` }}>
+              Срок допуска
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {product.variants.map(v => (
+              <DurationButton
+                key={v.duration}
+                variant={v}
+                color={product.color}
+                active={v.duration === selectedDuration}
+                saving={getSaving(v)}
+                onClick={() => setSelectedDuration(v.duration)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Привилегии */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div style={{ width: 3, height: 12, background: product.color }} />
+            <p className="text-[10px] uppercase tracking-[0.35em]" style={{ fontFamily: '"JetBrains Mono", monospace', color: `${product.color}cc` }}>
+              Привилегии — {product.perks.length}
+            </p>
+          </div>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-0.5">
+            {product.perks.map(perk => (
+              <li key={perk} className="flex items-start gap-2.5 text-sm leading-snug py-1 group">
                 <span
-                  className="px-2 py-0.5 text-[10px] font-bold rounded"
-                  style={{ backgroundColor: product.color, color: '#000' }}
+                  className="flex-shrink-0"
+                  style={{ marginTop: 6, width: 5, height: 5, background: product.color, transform: 'rotate(45deg)', boxShadow: `0 0 5px ${product.color}99` }}
+                />
+                <span className="text-site-muted group-hover:text-site-text transition-colors">{perk}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Minecraft ник */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div style={{ width: 3, height: 12, background: product.color }} />
+            <p className="text-[10px] uppercase tracking-[0.35em]" style={{ fontFamily: '"JetBrains Mono", monospace', color: `${product.color}cc` }}>
+              Minecraft ник
+            </p>
+          </div>
+          <input
+            type="text"
+            value={username}
+            onChange={e => handleUsernameChange(e.target.value)}
+            onBlur={e => { setUsernameError(validateUsername(username)); e.currentTarget.style.borderColor = usernameError ? '#FF3B30' : '#2a1010' }}
+            onFocus={e => { if (!usernameError) e.currentTarget.style.borderColor = product.color }}
+            placeholder="Введите ник (например: Notch)"
+            maxLength={16}
+            className="w-full bg-site-bg px-4 py-3 text-site-text placeholder-site-muted/40 focus:outline-none transition-colors"
+            style={{
+              border: `1px solid ${usernameError ? '#FF3B30' : '#2a1010'}`,
+              clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
+            }}
+          />
+          {usernameError
+            ? <p className="mt-1 text-site-danger text-xs">{usernameError}</p>
+            : <p className="mt-1 text-site-muted text-xs">Проверь ник — после оплаты изменить нельзя</p>
+          }
+        </div>
+
+        {/* Промокод */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <div style={{ width: 3, height: 12, background: product.color }} />
+            <p className="text-[10px] uppercase tracking-[0.35em]" style={{ fontFamily: '"JetBrains Mono", monospace', color: `${product.color}cc` }}>
+              Промокод
+            </p>
+          </div>
+          <PromoCodeField
+            applied={coupon}
+            onApply={setCoupon}
+            onRemove={() => setCoupon(null)}
+          />
+        </div>
+
+        {/* Цена + покупка */}
+        <div className="flex flex-col gap-4 pt-5" style={{ borderTop: `1px solid ${product.color}26` }}>
+
+          {/* Способ оплаты */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-site-muted text-xs uppercase tracking-wider">Оплата:</span>
+            {([
+              { id: 'card', label: 'Карта / СБП' },
+              { id: 'TON', label: 'TON' },
+              { id: 'USDT', label: 'USDT' },
+            ] as const).map(m => {
+              const on = paymentMethod === m.id
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setPaymentMethod(m.id)}
+                  className="px-3 py-1 text-xs font-bold transition-all"
+                  style={{
+                    clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
+                    border: `1px solid ${on ? product.color : '#2a1010'}`,
+                    background: on ? `${product.color}22` : 'transparent',
+                    color: on ? product.color : '#888',
+                  }}
                 >
-                  {product.badge}
-                </span>
+                  {m.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] mb-1" style={{ fontFamily: '"JetBrains Mono", monospace', color: '#888' }}>К оплате</p>
+              {coupon ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display text-4xl" style={{ fontFamily: '"Bebas Neue", sans-serif', color: '#fff', letterSpacing: '0.02em' }}>{discountedPrice} ₽</span>
+                  <span className="text-site-muted text-sm line-through">{basePrice} ₽</span>
+                  <span className="text-site-success text-xs font-semibold">
+                    −{coupon.type === 'percent' ? `${coupon.value}%` : `${basePrice - discountedPrice}₽`}
+                  </span>
+                </div>
+              ) : (
+                <span className="font-display text-4xl" style={{ fontFamily: '"Bebas Neue", sans-serif', color: '#fff', letterSpacing: '0.02em' }}>{basePrice} ₽</span>
+              )}
+              {paymentMethod !== 'card' && cryptoAmount && (
+                <p className="text-site-muted text-xs mt-1">≈ {cryptoAmount} {paymentMethod}</p>
+              )}
+              {paymentMethod === 'card' && (
+                <p className="text-site-muted text-xs mt-1">Карта · СБП</p>
               )}
             </div>
-            <p className="text-site-muted text-sm mb-6 leading-relaxed">{product.description}</p>
 
-            {/* Duration */}
-            <div className="mb-6">
-              <p className="text-site-muted text-xs uppercase tracking-wider mb-3">Срок действия</p>
-              <div className="flex gap-2">
-                {product.variants.map(v => (
-                  <DurationButton
-                    key={v.duration}
-                    variant={v}
-                    active={v.duration === selectedDuration}
-                    saving={getSaving(v)}
-                    onClick={() => setSelectedDuration(v.duration)}
-                  />
-                ))}
-              </div>
-            </div>
+            <button
+              onClick={handleBuy}
+              disabled={loading || !username}
+              className="group relative w-full sm:w-auto px-9 py-3.5 font-bold transition-all flex items-center justify-center gap-2 overflow-hidden"
+              style={{
+                clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))',
+                fontFamily: '"Bebas Neue", sans-serif', letterSpacing: '0.16em', fontSize: 17,
+                background: (!username || loading) ? '#1a1a1a' : `linear-gradient(135deg, ${shade(product.color, 0.12)}, ${shade(product.color, -0.28)})`,
+                color: (!username || loading) ? '#666' : readableText(product.color),
+                cursor: (!username || loading) ? 'not-allowed' : 'pointer',
+                boxShadow: (!username || loading) ? 'none' : `0 0 26px -4px ${product.color}aa`,
+              }}
+            >
+              {loading ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Создаём заказ...
+                </>
+              ) : (
+                <>
+                  <span className="relative z-10">Получить допуск →</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
 
-            {/* Perks */}
-            <div className="mb-6">
-              <p className="text-site-muted text-xs uppercase tracking-wider mb-3">
-                Возможности — {product.perks.length} привилегий
-              </p>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
-                {product.perks.map(perk => (
-                  <li key={perk} className="flex items-start gap-2 text-sm text-site-text leading-snug">
-                    <svg
-                      className="w-3.5 h-3.5 text-site-success mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-site-muted">{perk}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Username */}
-            <div className="mb-4">
-              <p className="text-site-muted text-xs uppercase tracking-wider mb-2">Minecraft ник</p>
-              <input
-                type="text"
-                value={username}
-                onChange={e => handleUsernameChange(e.target.value)}
-                onBlur={() => setUsernameError(validateUsername(username))}
-                placeholder="Введите ник (например: Notch)"
-                maxLength={16}
-                className={`w-full bg-site-bg border rounded px-4 py-3 text-site-text placeholder-site-muted/40 focus:outline-none transition-colors ${
-                  usernameError
-                    ? 'border-site-danger'
-                    : 'border-site-border focus:border-site-accent'
-                }`}
-              />
-              {usernameError
-                ? <p className="mt-1 text-site-danger text-xs">{usernameError}</p>
-                : <p className="mt-1 text-site-muted text-xs">Проверь ник — после оплаты изменить нельзя</p>
-              }
-            </div>
-
-            {/* Promo code */}
-            <div className="mb-6">
-              <p className="text-site-muted text-xs uppercase tracking-wider mb-2">Промокод</p>
-              <PromoCodeField
-                applied={coupon}
-                onApply={setCoupon}
-                onRemove={() => setCoupon(null)}
-              />
-            </div>
-
-            {/* Price + buy */}
-            <div className="flex flex-col gap-4 pt-4 border-t border-site-border">
-
-              {/* Payment method selector */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-site-muted text-xs">Оплата:</span>
-                {([
-                  { id: 'card', label: '💳 Карта / СБП' },
-                  { id: 'TON', label: '💎 TON' },
-                  { id: 'USDT', label: '💵 USDT' },
-                ] as const).map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => setPaymentMethod(m.id)}
-                    className={`px-3 py-1 rounded text-xs font-bold border transition-all ${
-                      paymentMethod === m.id
-                        ? 'bg-site-accent border-site-accent text-white'
-                        : 'border-site-border text-site-muted hover:border-site-accent'
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <p className="text-site-muted text-xs mb-1">К оплате</p>
-                {coupon ? (
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-site-text">{discountedPrice} ₽</span>
-                    <span className="text-site-muted text-sm line-through">{basePrice} ₽</span>
-                    <span className="text-site-success text-xs font-semibold">
-                      −{coupon.type === 'percent' ? `${coupon.value}%` : `${basePrice - discountedPrice}₽`}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-2xl font-bold text-site-text">{basePrice} ₽</span>
-                )}
-                {/* Crypto conversion hint */}
-                {paymentMethod !== 'card' && cryptoAmount && (
-                  <p className="text-site-muted text-xs mt-1">
-                    ≈ {cryptoAmount} {paymentMethod}
-                  </p>
-                )}
-                {paymentMethod === 'card' && (
-                  <p className="text-site-muted text-xs mt-1">💳 Карта · СБП</p>
-                )}
-              </div>
-
-              <button
-                onClick={handleBuy}
-                disabled={loading || !username}
-                className={`w-full sm:w-auto px-8 py-3 rounded font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                  !username || loading
-                    ? 'bg-site-border text-site-muted cursor-not-allowed'
-                    : 'bg-site-accent hover:bg-red-600 text-white glow-red'
-                }`}
-              >
-                {loading ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Создаём заказ...
-                  </>
-                ) : 'Перейти к оплате →'}
-              </button>
-              </div>
-            </div>
-
-            {orderError && (
-              <div className="mt-4 p-3 bg-site-danger/10 border border-site-danger/30 rounded text-site-danger text-sm">
-                {orderError}
-              </div>
-            )}
+        {orderError && (
+          <div className="mt-4 p-3 bg-site-danger/10 border border-site-danger/30 text-site-danger text-sm">
+            {orderError}
+          </div>
+        )}
       </div>
     </div>
   )
 }
-
