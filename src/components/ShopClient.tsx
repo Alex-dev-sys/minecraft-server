@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import RankEmblem from './RankEmblem'
 import { useRouter } from 'next/navigation'
 import type { Product, Duration, ProductVariant, Coupon } from '@/lib/types'
 
@@ -37,8 +38,8 @@ function RankCarousel({ products, selectedId, onSelect }: {
     <div style={{ backgroundColor: '#0e0e0e' }}>
       <style>{`
         @keyframes orb-pulse {
-          0%, 100% { box-shadow: 0 0 10px var(--c), 0 0 20px var(--c-50); transform: scale(1); }
-          50%       { box-shadow: 0 0 18px var(--c), 0 0 40px var(--c-50), 0 0 60px var(--c-30); transform: scale(1.08); }
+          0%, 100% { filter: drop-shadow(0 0 4px var(--c)); transform: scale(1); }
+          50%       { filter: drop-shadow(0 0 10px var(--c)) drop-shadow(0 0 22px var(--c-50)); transform: scale(1.08); }
         }
         @keyframes card-float {
           0%, 100% { transform: translateY(0px); }
@@ -166,30 +167,21 @@ function RankCarousel({ products, selectedId, onSelect }: {
                     />
                   )}
 
-                  {/* orb */}
+                  {/* герб ранга */}
                   <div
                     className={active ? 'rank-orb-active' : ''}
                     style={{
                       ['--c' as string]: p.color,
                       ['--c-50' as string]: `${p.color}50`,
                       ['--c-30' as string]: `${p.color}30`,
-                      width: 40, height: 40, borderRadius: '50%',
-                      background: `radial-gradient(circle at 35% 35%, ${p.color}ee, ${p.color}88)`,
-                      boxShadow: active
-                        ? `0 0 14px ${p.color}, 0 0 28px ${p.color}60`
-                        : isHov ? `0 0 10px ${p.color}80` : `0 0 6px ${p.color}40`,
                       flexShrink: 0,
-                      transition: 'box-shadow 0.2s ease',
-                      position: 'relative',
+                      filter: active
+                        ? `drop-shadow(0 0 8px ${p.color})`
+                        : isHov ? `drop-shadow(0 0 6px ${p.color}80)` : `drop-shadow(0 0 3px ${p.color}40)`,
+                      transition: 'filter 0.2s ease',
                     }}
                   >
-                    {/* inner highlight */}
-                    <div style={{
-                      position: 'absolute', top: '18%', left: '22%',
-                      width: '35%', height: '25%', borderRadius: '50%',
-                      background: 'rgba(255,255,255,0.45)',
-                      filter: 'blur(2px)',
-                    }} />
+                    <RankEmblem rank={p.id} color={p.color} size={44} />
                   </div>
 
                   {/* name */}
@@ -509,10 +501,9 @@ export default function ShopClient({ products }: { products: Product[] }) {
 
             {/* Rank name */}
             <div className="flex items-center gap-3 mb-1">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: product.color, boxShadow: `0 0 14px ${product.color}` }}
-              />
+              <div style={{ filter: `drop-shadow(0 0 10px ${product.color}80)`, flexShrink: 0 }}>
+                <RankEmblem rank={product.id} color={product.color} size={40} />
+              </div>
               <h2
                 className="font-pixel text-sm md:text-base"
                 style={{ color: product.color }}
