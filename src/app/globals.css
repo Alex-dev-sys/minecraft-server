@@ -464,7 +464,72 @@
    REDUCED MOTION
    ===================== */
 
+
+/* =====================
+   RANK AURAS (пиксельные эффекты рангов)
+   ===================== */
+
+@keyframes aura-rise {
+  0%   { transform: translateY(4px); opacity: 0; }
+  20%  { opacity: 0.95; }
+  100% { transform: translateY(-30px); opacity: 0; }
+}
+
+@keyframes aura-fall {
+  0%   { transform: translateY(-4px); opacity: 0; }
+  20%  { opacity: 0.9; }
+  100% { transform: translateY(26px); opacity: 0; }
+}
+
+@keyframes aura-mist {
+  0%   { transform: translate(-6px, 3px); opacity: 0; }
+  35%  { opacity: 0.55; }
+  100% { transform: translate(12px, -10px); opacity: 0; }
+}
+
+@keyframes aura-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  50%      { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes aura-bolt {
+  0%, 84%, 100% { opacity: 0; }
+  86%, 96%      { opacity: 1; }
+  90%           { opacity: 0.15; }
+}
+
+@keyframes aura-orbit-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes aura-rays-spin {
+  from { transform: rotate(0deg); opacity: 0.55; }
+  50%  { opacity: 0.95; }
+  to   { transform: rotate(360deg); opacity: 0.55; }
+}
+
+
+.rank-aura {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+  z-index: 2;
+}
+.aura-p { animation-timing-function: linear; animation-iteration-count: infinite; }
+.aura-rise    { animation-name: aura-rise; }
+.aura-fall    { animation-name: aura-fall; }
+.aura-mist    { animation-name: aura-mist; animation-timing-function: ease-in-out; }
+.aura-twinkle { animation-name: aura-twinkle; animation-timing-function: ease-in-out; }
+.aura-bolt    { animation-name: aura-bolt; animation-timing-function: steps(2, end); }
+.aura-orbit-arm { animation: aura-orbit-spin linear infinite; }
+.aura-rays      { animation: aura-rays-spin linear infinite; transform-origin: 50% 50%; }
+
 @media (prefers-reduced-motion: reduce) {
+  .rank-aura {
+    display: none;
+  }
+
   /* Catch-all: инлайновые keyframes (карусель магазина) и tailwind animate-* */
   *,
   *::before,

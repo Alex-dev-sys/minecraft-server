@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import RankEmblem from './RankEmblem'
+import RankAura from './RankAura'
 import { useRouter } from 'next/navigation'
 import type { Product, Duration, ProductVariant, Coupon } from '@/lib/types'
 
@@ -175,12 +176,14 @@ function RankCarousel({ products, selectedId, onSelect }: {
                       ['--c-50' as string]: `${p.color}50`,
                       ['--c-30' as string]: `${p.color}30`,
                       flexShrink: 0,
+                      position: 'relative',
                       filter: active
                         ? `drop-shadow(0 0 8px ${p.color})`
                         : isHov ? `drop-shadow(0 0 6px ${p.color}80)` : `drop-shadow(0 0 3px ${p.color}40)`,
                       transition: 'filter 0.2s ease',
                     }}
                   >
+                    {(active || isHov) && <RankAura rank={p.id} size={44} />}
                     <RankEmblem rank={p.id} color={p.color} size={44} />
                   </div>
 
@@ -501,7 +504,8 @@ export default function ShopClient({ products }: { products: Product[] }) {
 
             {/* Rank name */}
             <div className="flex items-center gap-3 mb-1">
-              <div style={{ filter: `drop-shadow(0 0 10px ${product.color}80)`, flexShrink: 0 }}>
+              <div style={{ filter: `drop-shadow(0 0 10px ${product.color}80)`, flexShrink: 0, position: 'relative' }}>
+                <RankAura rank={product.id} size={40} />
                 <RankEmblem rank={product.id} color={product.color} size={40} />
               </div>
               <h2
